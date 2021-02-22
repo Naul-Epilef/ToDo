@@ -1,33 +1,22 @@
 import express from "express";
-import { getRepository } from "typeorm";
-import { v4 } from "uuid";
 
-import Task from "../models/task";
+import ListTask from "../services/list.tasks";
+import CreateTask from "../services/create.tasks";
+import SwitchTask from "../services/switch.tasks";
+import EditTask from "../services/edit.tasks";
+import DeleteTask from "../services/delete.tasks";
 
 const routes = express();
 
 routes.get("/", async (request, response) => {
-  const taskRepository = getRepository(Task);
-
-  const tasks = (await taskRepository.find({
-    order: { created_at: "ASC" },
-  })) as Task[];
-
+  const tasks = await new ListTask().execute();
   response.json(tasks);
 });
 
 routes.post("/", async (request, response) => {
   const { Title } = request.body;
 
-  const taskRepository = getRepository(Task);
-
-  const newTask = taskRepository.create({
-    id: v4(),
-    Title,
-    Done: false,
-  });
-
-  await taskRepository.save(newTask);
+  const newTask = await new CreateTask().execute({ Title });
 
   response.json(newTask);
 });
@@ -35,13 +24,7 @@ routes.post("/", async (request, response) => {
 routes.put("/switch/:id", async (request, response) => {
   const { id } = request.params;
 
-  const taskRepository = getRepository(Task);
-
-  const task = (await taskRepository.findOne(id)) as Task;
-
-  task.Done = !task.Done;
-
-  await taskRepository.save(task);
+  const task = await new SwitchTask().execute({ id });
 
   response.json(task);
 });
@@ -50,13 +33,7 @@ routes.put("/:id", async (request, response) => {
   const { id } = request.params;
   const { Title } = request.body;
 
-  const taskRepository = getRepository(Task);
-
-  const task = (await taskRepository.findOne(id)) as Task;
-
-  task.Title = Title;
-
-  await taskRepository.save(task);
+  const task = await new EditTask().execute({ id, Title });
 
   response.json(task);
 });
@@ -64,11 +41,9 @@ routes.put("/:id", async (request, response) => {
 routes.delete("/:id", async (request, response) => {
   const { id } = request.params;
 
-  const taskRepository = getRepository(Task);
+  const res = await new DeleteTask().execute({ id });
 
-  await taskRepository.delete(id);
-
-  response.json({ message: "Task deleted!" });
+  response.json(res);
 });
 
 export default routes;

@@ -1,7 +1,8 @@
 import React, {useEffect, useState} from 'react';
-import {TextInput} from 'react-native';
+import {AppState, TextInput} from 'react-native';
 
 import CheckBox from '@react-native-community/checkbox';
+import AsyncStorage from '@react-native-community/async-storage';
 import Feather from 'react-native-vector-icons/Feather';
 
 import api from '../../config/api';
@@ -42,7 +43,7 @@ const Tasks = () => {
   useEffect(() => {
     api
       .get(pathList)
-      .then((response) => {
+      .then(async (response) => {
         setTasks(response.data);
       })
       .catch((err) => {
@@ -50,12 +51,17 @@ const Tasks = () => {
       });
   }, []);
 
-  function updatingTask({index, task}: UpdateTasks): void {
-    const newTask = [...tasks];
-    newTask[index] = task;
-    setTasks(newTask);
+  // UPDATE THE LIST OF TASKS
+  async function updatingTask({index, task}: UpdateTasks): Promise<Task[]> {
+    const newTasks = [...tasks];
+    newTasks[index] = task;
+
+    setTasks(newTasks);
+
+    return newTasks;
   }
 
+  // SWITCH THE CHECKBOX AND SAVE ON DATABASE
   const handleSwitch = (id: string): void => {
     const pathSwitch = `/tasks/switch/${id}`;
     api
@@ -70,21 +76,34 @@ const Tasks = () => {
       });
   };
 
-  const handleEditName = ({id, Title}: EditName): void => {
-    const pathEditName = `/tasks/${id}`;
+  // UPDATE THE EDIT TASK ON ASYNCSTORAGE
+  const handleEditName = async ({id, Title}: EditName): Promise<void> => {
+    try {
+      const index = tasks.findIndex((task) => task.id === id);
+      const task = tasks[index];
+      task.Title = Title;
+      const newTasks = updatingTask({index, task});
 
+      await AsyncStorage.setItem('tasks', JSON.stringify(newTasks));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // SAVE THE EDIT TASK ON DATABASE
+  const handleEditNameSave = ({id, Title}: EditName): void => {
+    const pathEditName = `/tasks/${id}`;
     api
       .put(pathEditName, {Title})
       .then((response) => {
-        const index = tasks.findIndex((task) => task.id === id);
-        const task = response.data;
-        updatingTask({index, task});
+        console.log('The task was edited!');
       })
       .catch((err) => {
         console.error(err);
       });
   };
 
+  // DELETE TASK AND SAVE ON DATABASE
   const handleDeleteTask = ({id}: DeleteTask): void => {
     const pathDelete = `/tasks/${id}`;
     api
@@ -104,6 +123,7 @@ const Tasks = () => {
       });
   };
 
+  // ADD A TASK AND SAVE ON DATABASE
   const handleAddTask = ({Title}: AddTask): void => {
     const pathAdd = `/tasks`;
 
@@ -111,7 +131,7 @@ const Tasks = () => {
       .post(pathAdd, {Title})
       .then((response) => {
         const newTask = response.data;
-        setTasks([newTask, ...tasks]);
+        setTasks([...tasks, newTask]);
       })
       .catch((err) => {
         console.error(err);
@@ -130,6 +150,9 @@ const Tasks = () => {
             <TextInput
               value={task.Title}
               onChangeText={(Title) => handleEditName({id: task.id, Title})}
+              onSubmitEditing={(event) =>
+                handleEditNameSave({id: task.id, Title: event.nativeEvent.text})
+              }
             />
             <Feather
               name="trash"
@@ -140,7 +163,6 @@ const Tasks = () => {
       })}
       <TextInput
         placeholder="Adicionar"
-        // onSubmitEditing={(event) => test({text: event.nativeEvent.text})}
         onSubmitEditing={(event) =>
           handleAddTask({Title: event.nativeEvent.text})
         }

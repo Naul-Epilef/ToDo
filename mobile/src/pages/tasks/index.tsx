@@ -1,7 +1,8 @@
-import React, {useEffect, useState, useCallback} from 'react';
+import React, {useEffect, useState} from 'react';
 import {TextInput} from 'react-native';
 
 import CheckBox from '@react-native-community/checkbox';
+import Feather from 'react-native-vector-icons/Feather';
 
 import api from '../../config/api';
 
@@ -25,6 +26,10 @@ interface UpdateTasks {
   task: Task;
 }
 
+interface DeleteTask {
+  id: string;
+}
+
 const Tasks = () => {
   const pathList = '/tasks';
 
@@ -41,7 +46,7 @@ const Tasks = () => {
       });
   }, []);
 
-  function updatingTask({index, task}: UpdateTasks) {
+  function updatingTask({index, task}: UpdateTasks): void {
     const newTask = [...tasks];
     newTask[index] = task;
     setTasks(newTask);
@@ -76,6 +81,28 @@ const Tasks = () => {
       });
   };
 
+  const handleDeleteTask = ({id}: DeleteTask): void => {
+    const pathDelete = `/tasks/${id}`;
+    api
+      .delete(pathDelete)
+      .then((response) => {
+        const index = tasks.findIndex((task) => task.id === id);
+
+        const newTask = [...tasks];
+
+        newTask.splice(index);
+
+        console.log(newTask);
+
+        setTasks(newTask);
+
+        console.log(response.data.message);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  };
+
   return (
     <>
       {tasks.map((task, index) => {
@@ -88,6 +115,10 @@ const Tasks = () => {
             <TextInput
               value={task.Title}
               onChangeText={(Title) => handleEditName({id: task.id, Title})}
+            />
+            <Feather
+              name="trash"
+              onPress={() => handleDeleteTask({id: task.id})}
             />
           </Line>
         );

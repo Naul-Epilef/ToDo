@@ -30,6 +30,10 @@ interface DeleteTask {
   id: string;
 }
 
+interface AddTask {
+  Title: string;
+}
+
 const Tasks = () => {
   const pathList = '/tasks';
 
@@ -87,16 +91,27 @@ const Tasks = () => {
       .delete(pathDelete)
       .then((response) => {
         const index = tasks.findIndex((task) => task.id === id);
-
         const newTask = [...tasks];
 
         newTask.splice(index);
 
-        console.log(newTask);
-
         setTasks(newTask);
 
         console.log(response.data.message);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  };
+
+  const handleAddTask = ({Title}: AddTask): void => {
+    const pathAdd = `/tasks`;
+
+    api
+      .post(pathAdd, {Title})
+      .then((response) => {
+        const newTask = response.data;
+        setTasks([newTask, ...tasks]);
       })
       .catch((err) => {
         console.error(err);
@@ -123,6 +138,14 @@ const Tasks = () => {
           </Line>
         );
       })}
+      <TextInput
+        placeholder="Adicionar"
+        // onSubmitEditing={(event) => test({text: event.nativeEvent.text})}
+        onSubmitEditing={(event) =>
+          handleAddTask({Title: event.nativeEvent.text})
+        }
+        blurOnSubmit
+      />
     </>
   );
 };

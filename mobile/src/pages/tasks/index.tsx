@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {AppState, TextInput} from 'react-native';
+import {KeyboardAvoidingView, ScrollView} from 'react-native';
 
 import CheckBox from '@react-native-community/checkbox';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -7,7 +7,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import api from '../../config/api';
 
-import {Line} from './styles';
+import {Line, Input, AddInput} from './styles';
 
 interface Task {
   id: string;
@@ -96,7 +96,7 @@ const Tasks = () => {
     api
       .put(pathEditName, {Title})
       .then((response) => {
-        console.log('The task was edited!');
+        console.log(response.data);
       })
       .catch((err) => {
         console.error(err);
@@ -140,34 +140,51 @@ const Tasks = () => {
 
   return (
     <>
-      {tasks.map((task, index) => {
-        return (
-          <Line key={index}>
-            <CheckBox
-              value={task.Done}
-              onValueChange={(t) => handleSwitch(task.id)}
-            />
-            <TextInput
-              value={task.Title}
-              onChangeText={(Title) => handleEditName({id: task.id, Title})}
-              onSubmitEditing={(event) =>
-                handleEditNameSave({id: task.id, Title: event.nativeEvent.text})
-              }
-            />
-            <Feather
-              name="trash"
-              onPress={() => handleDeleteTask({id: task.id})}
-            />
-          </Line>
-        );
-      })}
-      <TextInput
-        placeholder="Adicionar"
-        onSubmitEditing={(event) =>
-          handleAddTask({Title: event.nativeEvent.text})
-        }
-        blurOnSubmit
-      />
+      <ScrollView>
+        {tasks.map((task, index) => {
+          return (
+            <Line key={index}>
+              <CheckBox
+                value={task.Done}
+                onValueChange={(t) => handleSwitch(task.id)}
+              />
+              <Input
+                value={task.Title}
+                onChangeText={(Title) => handleEditName({id: task.id, Title})}
+                onSubmitEditing={(event) =>
+                  handleEditNameSave({
+                    id: task.id,
+                    Title: event.nativeEvent.text,
+                  })
+                }
+                onBlur={(event) =>
+                  handleEditNameSave({
+                    id: task.id,
+                    Title: event.nativeEvent.text,
+                  })
+                }
+              />
+              <Feather
+                name="trash"
+                size={20}
+                onPress={() => handleDeleteTask({id: task.id})}
+              />
+            </Line>
+          );
+        })}
+      </ScrollView>
+      <KeyboardAvoidingView behavior="height" enabled>
+        <AddInput
+          placeholder="Adicionar"
+          onSubmitEditing={(event) =>
+            handleAddTask({Title: event.nativeEvent.text})
+          }
+          onBlur={(event) => {
+            event.nativeEvent.text = '';
+          }}
+          blurOnSubmit
+        />
+      </KeyboardAvoidingView>
     </>
   );
 };

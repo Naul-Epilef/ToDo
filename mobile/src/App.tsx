@@ -1,16 +1,11 @@
 import React from 'react';
-import {NavigationContainer} from '@react-navigation/native';
 
-import Routes from './routes';
+import Tasks from './pages/tasks';
 
 declare const global: {HermesInternal: null | {}};
 
 const App = () => {
-  return (
-    <NavigationContainer>
-      <Routes />
-    </NavigationContainer>
-  );
+  return <Tasks />;
 };
 
 export default App;

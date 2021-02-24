@@ -15,6 +15,7 @@ export const Input = styled.TextInput`
 export const AddInput = styled.TextInput`
   font-size: 20px;
   height: 55px;
-  width: 99%;
+  width: 98%;
+  margin: 0 1%;
   text-align: center;
 `;
